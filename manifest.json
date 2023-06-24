@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "TimeZoner",
+    "version": "0.1",
+    "description": "Converts times on sites to the local time zone",
+    "content_scripts": [
+        {
+            "js": ["scripts/format_times.js"],
+            "matches": [
+                "https://*/*"
+            ]
+        }
+    ]
+}
