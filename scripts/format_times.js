@@ -47,7 +47,6 @@ function detectTimeZone() {
     const nzstMatches = [(documentHTML.match(/([Nn]ew [Zz]ealand (([Ss]tandard|[Dd]aylight) )?[Tt]ime)|NZST|NZDT|((UTC)|(utc)|(GMT)|(gmt))\s?\+12/g) || []).length,"nzst"];
     const allMatches = [pstMatches, mstMatches, cstMatches, estMatches, utcMatches, bstMatches, cestMatches, mskMatches, istMatches, jstMatches, aestMatches, nzstMatches];
     allMatches.sort((a, b) => b[0] - a[0]);
-    console.log(allMatches);
     if (allMatches[0][0] <= 0) {
         // No specific timezone found
         return null;
@@ -70,8 +69,6 @@ function findTimes() {
     // Originally planned to leverage spaCy in order to detect times with NER (token classification), but that approach became too unwieldy to implement
     // and too unreliable with certain formats, so now times are detected through regex expressions
     const foundTimes = [];
-    // TODO: Words to numbers preprocess searchContent
-    // consider document ranges???
     foundTimes.push(...matchWithPosition(documentHTML, timeRegex));
     return foundTimes;
 }
@@ -133,7 +130,6 @@ function openTimeCard(e) {
     document.getElementById("timezoner-original-time").innerText = targetTime.getAttribute("base");
     document.getElementById("timezoner-converted-time").innerText = targetTime.innerText;
     const timeZone = targetTime.getAttribute("time-zone");
-    
     document.getElementsByClassName("timezoner-dropdown")[0].value = zoneToOffset[timeZone];
 }
 
@@ -169,7 +165,6 @@ document.body.appendChild(popupCardWrapper);
 
 // Locate times on the website
 const baseTimes = findTimes();
-console.log(baseTimes)
 
 if (baseTimes.length > 50) {
     console.warn("Large amount of times found! No times will be automatically converted.");
@@ -181,7 +176,6 @@ if (baseTimes.length > 50) {
             const spanCode = `<span class='timezoner-formattable-time', base='${time[0]}', time-zone='${siteTime}'>${time[0]}</span>`;
             document.body.innerHTML = (document.body.innerHTML.substring(0, time[1]+replaceOffset) + spanCode + document.body.innerHTML.substring(time[2]+replaceOffset,document.body.innerHTML.length));
             replaceOffset += spanCode.length - time[0].length + 3;
-            //console.log(time[0] + " => " + convertTime(time[0]))
         }
     });
 
