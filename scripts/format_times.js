@@ -116,12 +116,12 @@ function openTimeCard(e) {
 siteTime = detectTimeZone();
 chrome.storage.sync.get("userTimeZone").then((result) => {
     userTime = result.userTimeZone;
-    document.getElementsByClassName("timezoner-user-time").innerText = offsetToZone[userTime.toString()].toUpperCase();
+    document.getElementsByClassName("timezoner-user-time")[0].innerText = offsetToZone[userTime.toString()].toUpperCase();
 });
 chrome.storage.onChanged.addListener(() => {
     chrome.storage.sync.get("userTimeZone").then((result) => {
         userTime = result.userTimeZone;
-        document.getElementsByClassName("timezoner-user-time").innerText = offsetToZone[userTime.toString()].toUpperCase();
+        document.getElementsByClassName("timezoner-user-time")[0].innerText = offsetToZone[userTime.toString()].toUpperCase();
     });
 });
 

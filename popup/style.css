@@ -31,6 +31,7 @@ h2 {
   color: inherit;
   background: rgba(71,154,95,1);
   outline: none;
+  margin-bottom: 25px;
 }
 
 #timezoner-dropdown>option {
