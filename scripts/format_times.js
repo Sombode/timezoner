@@ -163,3 +163,13 @@ if (baseTimes.length > 50) {
         });
     }
 }
+
+document.getElementById("timezoner-remove-conversion").addEventListener("click", function() {
+    targetTime.innerText = targetTime.getAttribute("base");
+    targetTime.classList.remove("timezoner-formattable-time");
+    targetTime.removeEventListener("mouseover", openTimeCard);
+    targetTime.removeEventListener("mouseout", () => {
+        document.getElementById("timezoner-popup-wrapper").style.display = "none";
+    });
+    document.getElementById("timezoner-popup-wrapper").style.top = "10000000px"; // Moves the popup card so that it disappears (no longer hovered)
+});
