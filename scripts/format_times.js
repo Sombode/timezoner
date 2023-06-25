@@ -21,7 +21,7 @@ const offsetToZone = {
     "-7": "pst",
     "-6": "mst",
     "-5": "cst",
-    "4": "est",
+    "-4": "est",
     "0": "utc",
     "1": "bst",
     "3": "msk",
@@ -62,6 +62,10 @@ function matchWithPosition(content, regex) {
     return outputPairs;
 }
 
+function fixedMod(a, b) {
+    return ((a%b)+b)%b;
+}
+
 function findTimes() {
     // Originally planned to leverage spaCy in order to detect times with NER (token classification), but that approach became too unwieldy to implement
     // and too unreliable with certain formats, so now times are detected through regex expressions
@@ -84,6 +88,32 @@ function convertTime(time) {
     return hours + ":" + minutes + ":" + seconds;
 }
 
+function translateTime(time) {
+    // THIS converts between timezones
+    var baseZone = time.getAttribute("time-zone");
+    if (baseZone === "null") return;
+    baseTime = convertTime(time.getAttribute("base"));
+    const splitTime = baseTime.split(":");
+    hours = parseInt(splitTime[0]);
+    minutes = parseInt(splitTime[1]);
+    // Site time to UTC+0
+    hours = (hours - Math.floor(zoneToOffset[baseZone]));
+    if (zoneToOffset[baseZone] === 5.5) minutes -= 30;
+    if (minutes < 0) {
+        hours--;
+        minutes += 60;
+    }
+    // UTC+0 to local time
+    hours = (hours + Math.floor(userTime));
+    if (userTime.toString() === "5.5") minutes += 30;
+    if (minutes >= 60) {
+        hours++;
+        minutes -= 60;
+    }
+    hours = fixedMod(hours, 24);
+    time.innerText = hours.toString().padStart(2, "0") + ":" + minutes.toString().padStart(2, "0") + ":" + splitTime[2];
+}
+
 function validateTime(time, end) {
     time = convertTime(time);
     const splitTime = time.replace(/((?!:)\D)/g,"").split(":");
@@ -101,27 +131,28 @@ function openTimeCard(e) {
     timeCard.style.left = `${targetLoc.left}px`;
     timeCard.style.display = "block";
     document.getElementById("timezoner-original-time").innerText = targetTime.getAttribute("base");
+    document.getElementById("timezoner-converted-time").innerText = targetTime.innerText;
     const timeZone = targetTime.getAttribute("time-zone");
-    if (timeZone === "default") {
-        if (siteTime === null) {
-            document.getElementsByClassName("timezoner-dropdown")[0].value = 0;
-        } else {
-            document.getElementsByClassName("timezoner-dropdown")[0].value = zoneToOffset[siteTime];
-        }
-    } else {
-
-    }
+    
+    document.getElementsByClassName("timezoner-dropdown")[0].value = zoneToOffset[timeZone];
 }
 
 siteTime = detectTimeZone();
+
 chrome.storage.sync.get("userTimeZone").then((result) => {
     userTime = result.userTimeZone;
     document.getElementsByClassName("timezoner-user-time")[0].innerText = offsetToZone[userTime.toString()].toUpperCase();
+    for (time of document.getElementsByClassName("timezoner-formattable-time")) {
+        translateTime(time);
+    }
 });
 chrome.storage.onChanged.addListener(() => {
     chrome.storage.sync.get("userTimeZone").then((result) => {
         userTime = result.userTimeZone;
         document.getElementsByClassName("timezoner-user-time")[0].innerText = offsetToZone[userTime.toString()].toUpperCase();
+        for (time of document.getElementsByClassName("timezoner-formattable-time")) {
+            translateTime(time);
+        }
     });
 });
 
@@ -147,7 +178,7 @@ if (baseTimes.length > 50) {
     var replaceOffset = 0;
     baseTimes.forEach(time => {
         if (validateTime(time[0], time[2])) {
-            const spanCode = `<span class='timezoner-formattable-time', base='${time[0]}', time-zone='default'>${time[0]}</span>`;
+            const spanCode = `<span class='timezoner-formattable-time', base='${time[0]}', time-zone='${siteTime}'>${time[0]}</span>`;
             document.body.innerHTML = (document.body.innerHTML.substring(0, time[1]+replaceOffset) + spanCode + document.body.innerHTML.substring(time[2]+replaceOffset,document.body.innerHTML.length));
             replaceOffset += spanCode.length - time[0].length + 3;
             //console.log(time[0] + " => " + convertTime(time[0]))
@@ -172,4 +203,10 @@ document.getElementById("timezoner-remove-conversion").addEventListener("click",
         document.getElementById("timezoner-popup-wrapper").style.display = "none";
     });
     document.getElementById("timezoner-popup-wrapper").style.top = "10000000px"; // Moves the popup card so that it disappears (no longer hovered)
+});
+
+document.getElementsByClassName("timezoner-dropdown")[0].addEventListener("click", function(e) {
+    targetTime.setAttribute("time-zone", offsetToZone[e.target.value.toString()]);
+    translateTime(targetTime);
+    document.getElementById("timezoner-converted-time").innerText = targetTime.innerText;
 });
