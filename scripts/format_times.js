@@ -1,28 +1,20 @@
 const meridiemTimeRegex = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?!\d)\s*(?:am|pm|\b\d{2}:\d{2}(?::\d{2})?\b)/gi;
-const normalTimeRegex = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?!\d)(?!(\s[ap]m))/g;
+const normalTimeRegex = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?!\d)(?!(\s[ap]m))/gi;
 const verbalTimeRegex = /(half past|quarter past|quarter to)\s+(\d{1,2})/gi; // Can (partially) interpret more verbose statements of time, such as "half past 12"
 
 function matchWithPosition(content, regex) {
     const outputPairs = [];
-    while (null !== (match = regex.exec(content))) {
-        outputPairs.push([match[0], match.index, regex.lastIndex])
-    }
+    while (null !== (match = regex.exec(content))) { outputPairs.push([match[0], match.index, regex.lastIndex]); }
     return outputPairs;
 }
 
 function findTimes() {
-    // Originally planned to leverage spaCy in order to detect times with NER, but that approach became too unwieldy to implement
+    // Originally planned to leverage spaCy in order to detect times with NER (token classification), but that approach became too unwieldy to implement
     // and too unreliable with certain formats, so now times are detected through regex expressions
-    var searchContent = document.body.innerHTML.toLowerCase();
+    var searchContent = document.body.innerHTML;
     const foundTimes = [];
     // TODO: Words to numbers preprocess searchContent
-    //const timeRanges = searchContent.match(timeRangeRegex);
-    //const meridiemTimes = searchContent.match(meridiemTimeRegex);
-    //const normalTimes = searchContent.match(normalTimeRegex);
-    //const verbalTimes = searchContent.match(verbalTimeRegex); // Consider processing here?
-    //if (meridiemTimes) foundTimes.push(...meridiemTimes);
-    //if (normalTimes) foundTimes.push(...normalTimes);
-    //if (verbalTimes) foundTimes.push(...verbalTimes);
+    // consider document ranges???
     foundTimes.push(...matchWithPosition(searchContent, normalTimeRegex));
     foundTimes.push(...matchWithPosition(searchContent, meridiemTimeRegex));
     foundTimes.push(...matchWithPosition(searchContent, verbalTimeRegex));
