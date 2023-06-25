@@ -38,13 +38,17 @@ function validateTime(time, end) {
     return true;
 }
 
-function openTimeCard() {
-    
+function openTimeCard(e) {
+    const timeCard = document.getElementById("timezoner-popup-wrapper");
+    const targetLoc = e.target.getBoundingClientRect();
+    timeCard.style.top = `${targetLoc.bottom}px`;
+    timeCard.style.left = `${targetLoc.left}px`;
+    timeCard.style.display = "block";
 }
 
 // Inject CSS for formatted times
 timezonerCSS = document.createElement("style");
-timezonerCSS.innerText = ".timezoner-formattable-time{text-decoration:underline rgba(103,193,129,0.5) 4px;transition:.25s}.timezoner-formattable-time:hover{text-decoration:underline rgba(103,193,129,1) 4px}#timezoner-popup-card{outline-style:solid;outline-color:#479a5f;border-radius:8px;color:#fff;font-family:Inter;font-size:14px;font-weight:700}#timezoner-popup-wrapper{display:none;z-index:1000000;position:fixed;top:20px;left:305px;padding:15px;width:fit-content;height:fit-content}.timezoner-formattable-time:hover~#timezoner-popup-wrapper,#timezoner-popup-wrapper:hover{display:block}#timezoner-card-top{padding:5px 12px;background:#67c181;user-select:none}#timezoner-dropdowns{padding:5px 12px 12px;background:#67c181;user-select:none}#timezoner-dropdown{border:none;border-radius:4px;font:inherit;color:inherit;background:#479a5f;outline:0}#timezoner-dropdown>option{font:inherit;font-weight:400}#timezoner-remove-conversion{color:#000;padding:10px;border-width:0 3px 3px;border-radius:0 0 8px 8px;user-select:none}#timezoner-remove-conversion:hover{background-color:#e6e6e6}";
+timezonerCSS.innerText = "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');.timezoner-formattable-time{text-decoration:underline rgba(103,193,129,0.5) 4px;transition:.25s}.timezoner-formattable-time:hover{text-decoration:underline rgba(103,193,129,1) 4px}#timezoner-popup-card{outline-style:solid;outline-color:#479a5f;border-radius:8px;color:#fff;font-family:Inter;font-size:14px;font-weight:700}#timezoner-popup-wrapper{display:none;z-index:1000000;position:fixed;top:20px;left:305px;padding:15px;width:fit-content;height:fit-content}#timezoner-popup-wrapper:hover{display:block !important}#timezoner-card-top{padding:5px 12px;background:#67c181;user-select:none}#timezoner-dropdowns{padding:5px 12px 12px;background:#67c181;user-select:none}#timezoner-dropdown{border:none;border-radius:4px;font:inherit;color:inherit;background:#479a5f;outline:0}#timezoner-dropdown>option{font:inherit;font-weight:400}#timezoner-remove-conversion{color:#000;background-color:#fff;padding:10px;border-width:0 3px 3px;border-radius:0 0 8px 8px;user-select:none}#timezoner-remove-conversion:hover{background-color:#e6e6e6}";
 document.head.appendChild(timezonerCSS);
 
 // Create the time popup card
@@ -70,6 +74,9 @@ baseTimes.forEach(time => {
 
 // Add listeners to move the time popup
 const formattedTimes = document.getElementsByClassName("timezoner-formattable-time");
-formattedTimes.forEach(time => {
+for (time of formattedTimes) {
     time.addEventListener("mouseover", openTimeCard);
-});
+    time.addEventListener("mouseout", () => {
+        document.getElementById("timezoner-popup-wrapper").style.display = "none";
+    });
+}
