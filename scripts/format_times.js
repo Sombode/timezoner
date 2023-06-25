@@ -1,9 +1,8 @@
 const timeRegex = /(\d{1,2}):(\d{2})(?::(\d{2}))?(?!\d)(\s*(?:[ap]m))?/gi;
 const documentHTML = document.body.innerHTML;
-var siteTime;
-var targetTime;
+var siteTime, userTime, targetTime;
 
-const zones = {
+const zoneToOffset = {
     "pst": -7,
     "mst": -6,
     "cst": -5,
@@ -16,6 +15,21 @@ const zones = {
     "cest": 2,
     "aest": 10,
     "nzst": 12
+};
+
+const offsetToZone = {
+    "-7": "pst",
+    "-6": "mst",
+    "-5": "cst",
+    "4": "est",
+    "0": "utc",
+    "1": "bst",
+    "3": "msk",
+    "5.5": "ist",
+    "9": "jst",
+    "2": "cest",
+    "10": "aest",
+    "12": "nzst"
 };
 
 function detectTimeZone() {
@@ -92,7 +106,7 @@ function openTimeCard(e) {
         if (siteTime === null) {
             document.getElementsByClassName("timezoner-dropdown")[0].value = 0;
         } else {
-            document.getElementsByClassName("timezoner-dropdown")[0].value = zones[siteTime];
+            document.getElementsByClassName("timezoner-dropdown")[0].value = zoneToOffset[siteTime];
         }
     } else {
 
@@ -100,16 +114,26 @@ function openTimeCard(e) {
 }
 
 siteTime = detectTimeZone();
+chrome.storage.sync.get("userTimeZone").then((result) => {
+    userTime = result.userTimeZone;
+    document.getElementsByClassName("timezoner-user-time").innerText = offsetToZone[userTime.toString()].toUpperCase();
+});
+chrome.storage.onChanged.addListener(() => {
+    chrome.storage.sync.get("userTimeZone").then((result) => {
+        userTime = result.userTimeZone;
+        document.getElementsByClassName("timezoner-user-time").innerText = offsetToZone[userTime.toString()].toUpperCase();
+    });
+});
 
 // Inject CSS for formatted times
 timezonerCSS = document.createElement("style");
-timezonerCSS.innerText = "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');.timezoner-formattable-time{text-decoration:underline rgba(103,193,129,0.5) 4px;transition:.25s}.timezoner-formattable-time:hover{text-decoration:underline rgba(103,193,129,1) 4px}#timezoner-popup-card{outline-style:solid;outline-color:#479a5f;border-radius:8px;color:#fff;font-family:Inter;font-size:14px;font-weight:700}#timezoner-popup-wrapper{display:none;z-index:1000000;position:fixed;top:20px;left:305px;padding:15px;width:fit-content;height:fit-content}#timezoner-popup-wrapper:hover{display:block !important}#timezoner-card-top{padding:5px 12px;background:#67c181;user-select:none}#timezoner-dropdowns{padding:5px 12px 12px;background:#67c181;user-select:none}.timezoner-dropdown{border:none;border-radius:4px;font:inherit;color:inherit;background:#479a5f;outline:0}.timezoner-dropdown>option{font:inherit;font-weight:400}#timezoner-remove-conversion{color:#000;background-color:#fff;padding:10px;border-width:0 3px 3px;border-radius:0 0 8px 8px;user-select:none}#timezoner-remove-conversion:hover{background-color:#e6e6e6}";
+timezonerCSS.innerText = "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');.timezoner-formattable-time{text-decoration:underline rgba(103,193,129,0.5) 4px;transition:.25s}.timezoner-formattable-time:hover{text-decoration:underline rgba(103,193,129,1) 4px}#timezoner-popup-card{outline-style:solid;outline-color:#479a5f;border-radius:8px;color:#fff;font-family:Inter;font-size:14px;font-weight:700}#timezoner-popup-wrapper{display:none;z-index:1000000;position:fixed;top:20px;left:305px;padding:15px;width:fit-content;height:fit-content}#timezoner-popup-wrapper:hover{display:block !important}#timezoner-card-top{padding:5px 12px;background:#67c181;user-select:none}#timezoner-dropdowns{padding:5px 12px 12px;background:#67c181;user-select:none}.timezoner-user-time{padding:5px;user-select:none;border-none;border-radius:4px;font:inherit;color:inherit;outline:0}.timezoner-dropdown{border:none;border-radius:4px;font:inherit;color:inherit;background:#479a5f;outline:0}.timezoner-dropdown>option{font:inherit;font-weight:400}#timezoner-remove-conversion{color:#000;background-color:#fff;padding:10px;border-width:0 3px 3px;border-radius:0 0 8px 8px;user-select:none}#timezoner-remove-conversion:hover{background-color:#e6e6e6}";
 document.head.appendChild(timezonerCSS);
 
 // Create the time popup card
 popupCardWrapper = document.createElement("div");
 popupCardWrapper.setAttribute("id", "timezoner-popup-wrapper");
-popupCardWrapper.innerHTML = "<div id='timezoner-popup-card'> <div id='timezoner-card-top'> <span id='timezoner-original-time'>6:30:00 AM</span> -> <span id='timezoner-converted-time'>9:30:00 AM</span> </div><div id='timezoner-dropdowns'> <select class='timezoner-dropdown'> <option value=-7>PST</option> <option value=-6>MST</option> <option value=-5>CST</option> <option value=-4>EST</option> <option value=-3>UTC-3</option> <option value=0>UTC</option> <option value=1>BST</option> <option value=2>CEST</option> <option value=3>MSK</option> <option value=4>UTC+4</option> <option value=5.5>IST</option> <option value=8>UTC+8</option> <option value=9>JST</option> <option value=10>AEST</option> <option value=12>NZST</option> </select> -> <select class='timezoner-dropdown'> <option value=-7>PST</option> <option value=-6>MST</option> <option value=-5>CST</option> <option value=-4>EST</option> <option value=-3>UTC-3</option> <option value=0>UTC</option> <option value=1>BST</option> <option value=2>CEST</option> <option value=3>MSK</option> <option value=4>UTC+4</option> <option value=5.5>IST</option> <option value=8>UTC+8</option> <option value=9>JST</option> <option value=10>AEST</option> <option value=12>NZST</option> </select> </div><div id='timezoner-remove-conversion'>Don't convert this</div></div>";
+popupCardWrapper.innerHTML = "<div id='timezoner-popup-card'> <div id='timezoner-card-top'> <span id='timezoner-original-time'>6:30:00 AM</span> -> <span id='timezoner-converted-time'>9:30:00 AM</span> </div><div id='timezoner-dropdowns'> <select class='timezoner-dropdown'> <option value=-7>PST</option> <option value=-6>MST</option> <option value=-5>CST</option> <option value=-4>EST</option> <option value=0>UTC</option> <option value=1>BST</option> <option value=2>CEST</option> <option value=3>MSK</option> <option value=5.5>IST</option> <option value=9>JST</option> <option value=10>AEST</option> <option value=12>NZST</option> </select> -> <span class='timezoner-user-time'>UTC</span></div><div id='timezoner-remove-conversion'>Don't convert this</div></div>";
 document.body.appendChild(popupCardWrapper);
 
 // Locate times on the website
@@ -117,7 +141,7 @@ const baseTimes = findTimes();
 console.log(baseTimes)
 
 if (baseTimes.length > 50) {
-    console.warn("Large amount of times found! This could be a video streaming site (YouTube), so no times will be automatically converted.");
+    console.warn("Large amount of times found! No times will be automatically converted.");
 } else {
     // Replace times with a formatted span
     var replaceOffset = 0;

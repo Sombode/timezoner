@@ -3,6 +3,9 @@
     "name": "TimeZoner",
     "version": "0.1",
     "description": "Converts times on sites to the local time zone",
+    "permissions": [
+        "storage"
+    ],
     "content_scripts": [
         {
             "js": ["scripts/format_times.js"],
@@ -10,5 +13,8 @@
                 "https://*/*"
             ]
         }
-    ]
+    ],
+    "action": {
+        "default_popup": "popup/popup.html"
+    }
 }
